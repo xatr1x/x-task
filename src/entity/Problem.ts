@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Solution } from './Solution';
 import { Request } from './Request';
+import { Details } from './Details';
 
 @Entity()
 export class Problem {
@@ -38,4 +39,7 @@ export class Problem {
 
   @OneToMany(() => Solution, solution => solution.problem, { cascade: true })
   solutions: Solution[];
+
+  @OneToMany(() => Details, details => details.problem, { cascade: true })
+  details: Details[];
 }
