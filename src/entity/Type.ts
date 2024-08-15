@@ -4,12 +4,13 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
   OneToMany,
 } from 'typeorm';
 import { Brand } from './Brand';
 import { Model } from './Model';
+import { Problem } from './Problem';
+import { Details } from './Details';
+import { Solution } from './Solution';
 
 @Entity()
 export class Type {
@@ -40,4 +41,13 @@ export class Type {
 
   @OneToMany(() => Model, (model) => model.type)
   models: Model[];
+
+  @OneToMany(() => Problem, (problem) => problem.type)
+  problems: Problem[];
+
+  @OneToMany(() => Details, (detail) => detail.type)
+  details: Details[];
+
+  @OneToMany(() => Solution, (solution) => solution.type)
+  solutions: Solution[];
 }

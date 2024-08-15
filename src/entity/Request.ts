@@ -1,4 +1,5 @@
 import {
+  Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
@@ -11,6 +12,7 @@ import { Type } from './Type';
 import { Brand } from './Brand';
 import { Model } from './Model';
 import { Problem } from './Problem';
+import { IsBoolean } from 'class-validator';
 
 @Entity()
 export class Request {
@@ -44,4 +46,10 @@ export class Request {
 
   @OneToMany(() => Problem, problem => problem.request, { cascade: true })
   problems: Problem[];
+
+  @IsBoolean()
+  @Column({
+    default: true
+  })
+  isActive: boolean
 }

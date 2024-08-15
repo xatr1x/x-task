@@ -11,6 +11,7 @@ import {
 import { Solution } from './Solution';
 import { Request } from './Request';
 import { Details } from './Details';
+import { Type } from './Type';
 
 @Entity()
 export class Problem {
@@ -42,4 +43,8 @@ export class Problem {
 
   @OneToMany(() => Details, details => details.problem, { cascade: true })
   details: Details[];
+
+  @ManyToOne(() => Type, (type) => type.brands)
+  @JoinColumn({ name: 'type_id' })
+  type: Type;
 }

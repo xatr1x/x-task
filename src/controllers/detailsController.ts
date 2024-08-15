@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
-import modelService from '../services/modelService';
+import detailsService from '../services/detailsService';
 import { ModelCreateDto } from '../dto/model-create.dto';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 import { ModelChangeDto } from '../dto/model-change.dto';
+import { DetailsCreateDto } from '../dto/details-cteate.dto';
 
-export const getModels = async (
+export const getDetails = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
@@ -13,21 +14,21 @@ export const getModels = async (
     const page = parseInt(req.query.page as string, 10) || 1;
     const size = parseInt(req.query.size as string, 10) || 10;
   
-    const result = await modelService.getAllModels(page, size);
+    const result = await detailsService.getAllModels(page, size);
     return res.json(result);
   } catch (e) {
-    console.error('Error getting models', e);
+    console.error('Error getting details', e);
     return res.status(500).send((e as Error).message);
   }
 };
 
-export const addModel = async (
+export const addDetails = async (
   req: Request,
   res: Response
 ): Promise<Response>  => {
   try {
-    const modelDto = plainToClass(ModelCreateDto, req.body);
-    const errors = await validate(modelDto);
+    const detailsDto = plainToClass(DetailsCreateDto, req.body);
+    const errors = await validate(detailsDto);
 
     if (errors.length > 0) {
       return res.status(400).json({
@@ -36,22 +37,22 @@ export const addModel = async (
       });
     }
 
-    const result = await modelService.addModel(req.body);
+    const result = await detailsService.addDetails(req.body);
 
     return res.json(result);
   } catch (e) {
-    console.error('Error adding model', e);
+    console.error('Error adding details', e);
     return res.status(500).send((e as Error).message);
   }
 }
 
-export const changeModel = async (
+export const changeDetails = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const modelDto = plainToClass(ModelChangeDto, req.body);
-    const errors = await validate(modelDto);
+    const detailsDto = plainToClass(ModelChangeDto, req.body);
+    const errors = await validate(detailsDto);
 
     if (errors.length > 0) {
       return res.status(400).json({
@@ -60,16 +61,16 @@ export const changeModel = async (
       });
     }
 
-    const result = await modelService.changeModel(req.body);
+    const result = await detailsService.changeDetails(req.body);
 
     return res.json(result);
   } catch (e) {
-    console.error('Error editing model', e);
+    console.error('Error editing details', e);
     return res.status(500).send((e as Error).message);
   }
 }
 
-export const deleteModel = async (
+export const deleteDetails = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
@@ -78,11 +79,11 @@ export const deleteModel = async (
       return res.status(400).send('No id param')
     }
 
-    const result = await modelService.deleteModel(+req.params.id);
+    const result = await detailsService.deleteDetails(+req.params.id);
 
     return res.json(result);
   } catch (e) {
-    console.error('Error deleteing model', e);
+    console.error('Error deleteing details', e);
     return res.status(500).send((e as Error).message);
   }
 }

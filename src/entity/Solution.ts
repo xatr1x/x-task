@@ -8,6 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Problem } from './Problem';
+import { Type } from './Type';
+import { Details } from './Details';
 
 @Entity()
 export class Solution {
@@ -36,4 +38,12 @@ export class Solution {
   @ManyToOne(() => Problem, problem => problem.solutions)
   @JoinColumn({ name: 'problem_id' })
   problem: Problem;
+
+  @ManyToOne(() => Type, (type) => type.brands)
+  @JoinColumn({ name: 'type_id' })
+  type: Type;
+
+  @ManyToOne(() => Details, details => details.solutions)
+  @JoinColumn({ name: 'details_id' })
+  details: Details;
 }

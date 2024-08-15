@@ -12,19 +12,22 @@ const brandRepository = AppDataSource.getRepository(Brand);
 const modelRepository = AppDataSource.getRepository(Model);
 const problemRepository = AppDataSource.getRepository(Problem);
 
-interface PaginatedModels {
+interface PaginatedRequests {
   count: number;
   currentPage: number;
   size: number;
   requests: Request[];
 }
 
-const getAllRequests = async (page: number, size: number): Promise<PaginatedModels> => {
-  const count = await requestRepository.count();
+const getAllRequests = async (page: number, size: number): Promise<PaginatedRequests> => {
+  const count = await requestRepository.count({ where: { isActive: true }});
 
   const requests = await requestRepository.find({
     skip: (page - 1) * size,
     take: size,
+    where: {
+      isActive: true
+    }
   });
 
   return {
@@ -61,8 +64,28 @@ const addRequest = async (request: RequestCreateDto): Promise<string> => {
   });
 
   for (let i = 0; i < request.problems.length; i++) {
-    await problemRepository.save({ description: request.problems[i], problem: { id: newRequest.id } });
+    await problemRepository.save({ description: request.problems[i], request: { id: newRequest.id } });
   }
 
   return 'request added';
+}
+
+const deleteRequest = async (id: number): Promise<string> => {
+  const existingRequest = await requestRepository.findOne({ where: { id }});
+
+  if (!existingRequest) {
+    throw new Error(`request with id ${id} not found`);
+  }
+
+  existingRequest.isActive = false;
+
+  await requestRepository.save(existingRequest);
+
+  return 'Request was deleted';
+}
+
+export default {
+  getAllRequests,
+  addRequest,
+  deleteRequest
 }
