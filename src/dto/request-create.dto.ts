@@ -3,17 +3,11 @@ import { IsInt, IsNotEmpty, IsArray } from 'class-validator';
 export class RequestCreateDto {
   @IsInt()
   @IsNotEmpty()
-  type: number;
+  typeId: number;
 
   @IsInt()
-  @IsNotEmpty()
-  brand: number;
+  brandId?: number;
 
   @IsInt()
-  @IsNotEmpty()
-  model: number;
-
-  @IsArray()
-  @IsNotEmpty()
-  problems: string[]
+  modelId?: number;
 }

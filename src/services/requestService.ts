@@ -19,15 +19,16 @@ interface PaginatedRequests {
   requests: Request[];
 }
 
-const getAllRequests = async (page: number, size: number): Promise<PaginatedRequests> => {
-  const count = await requestRepository.count({ where: { isActive: true }});
+const getAllRequests = async (
+  page: number,
+  size: number
+): Promise<PaginatedRequests> => {
+  const count = await requestRepository.count();
 
   const requests = await requestRepository.find({
     skip: (page - 1) * size,
     take: size,
-    where: {
-      isActive: true
-    }
+    relations: ['type', 'brand', 'model']
   });
 
   return {
@@ -38,54 +39,66 @@ const getAllRequests = async (page: number, size: number): Promise<PaginatedRequ
   };
 };
 
-const addRequest = async (request: RequestCreateDto): Promise<string> => {
-  const existingType = await typeRepository.findOne({ where: { id: request.type }});
-
-  if (!existingType) {
-    throw new Error(`type with id ${request.type} not found`);
-  }
-
-  const existingBrand = await brandRepository.findOne({ where: { id: request.brand } });
-
-  if (!existingBrand) {
-    throw new Error(`brand with id ${request.brand} not found`);
-  }
-
-  const existingModel = await modelRepository.findOne({ where: { id: request.model } });
-
-  if (!existingModel) {
-    throw new Error(`model with id ${request.brand} not found`);
-  }
-
-  const newRequest = await requestRepository.save({
-    type: { id: request.type },
-    brand: { id: request.brand },
-    model: { id: request.model }
+const getRequest = async (id: number): Promise<Request> => {
+  const request = await requestRepository.findOne({
+    where: { id },
+    relations: ['type', 'brand', 'model', 'problems.details'],
   });
 
-  for (let i = 0; i < request.problems.length; i++) {
-    await problemRepository.save({ description: request.problems[i], request: { id: newRequest.id } });
+  if (!request) {
+    throw new Error('No such request');
   }
 
-  return 'request added';
-}
+  return request;
+};
+
+const addRequest = async (requestDto: RequestCreateDto): Promise<number> => {
+  const type = await typeRepository.findOneBy({ id: requestDto.typeId });
+  if (!type) {
+    throw new Error('Тип не знайдено');
+  }
+
+  const request = new Request();
+  request.type = type;
+
+  if (requestDto.brandId) {
+    const brand = await brandRepository.findOneBy({ id: requestDto.brandId });
+    if (!brand) {
+      throw new Error('Бренд не знайдено');
+    }
+    request.brand = brand;
+  }
+
+  if (requestDto.modelId) {
+    const model = await modelRepository.findOneBy({ id: requestDto.modelId });
+    if (!model) {
+      throw new Error('Модель не знайдено');
+    }
+    request.model = model;
+  }
+
+  const result = await requestRepository.save(request);
+
+  return result.id;
+};
 
 const deleteRequest = async (id: number): Promise<string> => {
-  const existingRequest = await requestRepository.findOne({ where: { id }});
+  const existingRequest = await requestRepository.findOne({ where: { id } });
 
   if (!existingRequest) {
     throw new Error(`request with id ${id} not found`);
   }
 
-  existingRequest.isActive = false;
+  // existingRequest.isActive = false;
 
   await requestRepository.save(existingRequest);
 
   return 'Request was deleted';
-}
+};
 
 export default {
   getAllRequests,
   addRequest,
-  deleteRequest
-}
+  deleteRequest,
+  getRequest,
+};

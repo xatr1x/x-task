@@ -4,7 +4,4 @@ export class BrandCreateDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  @IsInt()
-  type: number;
 }

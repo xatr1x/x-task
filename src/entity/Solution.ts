@@ -1,15 +1,12 @@
 import {
-  Column,
-  CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
   PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
   UpdateDateColumn,
+  CreateDateColumn,
 } from 'typeorm';
-import { Problem } from './Problem';
 import { Type } from './Type';
-import { Details } from './Details';
 
 @Entity()
 export class Solution {
@@ -32,18 +29,9 @@ export class Solution {
   @Column()
   description: string;
 
-  @Column()
+  @Column({ nullable: true })
   comment: string;
 
-  @ManyToOne(() => Problem, problem => problem.solutions)
-  @JoinColumn({ name: 'problem_id' })
-  problem: Problem;
-
-  @ManyToOne(() => Type, (type) => type.brands)
-  @JoinColumn({ name: 'type_id' })
+  @ManyToOne(() => Type)
   type: Type;
-
-  @ManyToOne(() => Details, details => details.solutions)
-  @JoinColumn({ name: 'details_id' })
-  details: Details;
 }

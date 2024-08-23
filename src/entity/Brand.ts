@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
+  OneToMany
 } from 'typeorm';
 import { Type } from './Type';
 import { Model } from './Model';
@@ -31,11 +31,4 @@ export class Brand {
 
   @Column()
   name: string;
-
-  @ManyToOne(() => Type, (type) => type.brands)
-  @JoinColumn({ name: 'type_id' })
-  type: Type;
-
-  @OneToMany(() => Model, (model) => model.brand)
-  models: Model[];
 }

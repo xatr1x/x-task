@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Brand } from './Brand';
 import { Type } from './Type';
 
@@ -23,11 +30,9 @@ export class Model {
   @Column()
   name: string;
 
-  @ManyToOne(() => Type, type => type.id)
-  @JoinColumn({ name: 'type_id' })
+  @ManyToOne(() => Type)
   type: Type;
 
-  @ManyToOne(() => Brand, brand => brand.id)
-  @JoinColumn({ name: 'brand_id' })
+  @ManyToOne(() => Brand)
   brand: Brand;
 }
