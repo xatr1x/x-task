@@ -16,12 +16,24 @@ interface PaginatedDetails {
   details: Details[];
 }
 
-const getAllModels = async (page: number, size: number): Promise<PaginatedDetails> => {
-  const count = await detailsRepository.count();
+const getAllDetails = async (
+  page: number,
+  size: number,
+  problem?: number,
+): Promise<PaginatedDetails> => {
+  const where: any = {};
+
+  if (problem) {
+    where.problem = { id: problem };
+  }
+
+  const count = await detailsRepository.count(where);
 
   const details = await detailsRepository.find({
     skip: (page - 1) * size,
     take: size,
+    where,
+    relations: ['problem']
   });
 
   return {
@@ -32,30 +44,44 @@ const getAllModels = async (page: number, size: number): Promise<PaginatedDetail
   };
 };
 
-const addDetails = async (details: DetailsCreateDto): Promise<string> => {
-  const existingType = await typeRepository.findOne({ where: { id: details.type }});
-
-  if (!existingType) {
-    throw new Error(`type with id ${details.type} not found`);
-  }
-
-  const existingProblem = await problemRepository.findOne({ where: { id: details.problem }});
-
-  if (!existingProblem) {
-    throw new Error(`problem with id ${details.problem} not found`);
-  }
-
-  await detailsRepository.save({
-    name: details.description,
-    type: { id: details.type },
-    problem: { id: details.problem }
+const addDetails = async (detailsDto: DetailsCreateDto): Promise<string> => {
+  const problem = await problemRepository.findOneBy({
+    id: detailsDto.problemId,
   });
+  if (!problem) {
+    throw new Error('Проблему не знайдено');
+  }
 
-  return 'Details were added';
-}
+  const details = new Details();
+  details.description = detailsDto.description;
+  details.problem = problem;
+
+  await detailsRepository.save(details);
+
+  return 'Деталі успішно створено';
+};
+
+export const addDetailsToProblem = async (problemId: number, detailsId: number): Promise<string> => {
+  const problem = await problemRepository.findOne({ where: { id: problemId }, relations: ['details'] });
+    if (!problem) {
+      throw new Error('Проблему не знайдено');
+    }
+
+    const details = await detailsRepository.findOne({ where: { id: detailsId } });
+    if (!details) {
+      throw new Error('Деталі не знайдено');
+    }
+
+    if (!problem.details.some(d => d.id === details.id)) {
+      problem.details.push(details);
+      await problemRepository.save(problem);
+    }
+
+    return 'Деталі успішно додані до проблеми';
+};
 
 const changeDetails = async (details: DetailsChangeDto): Promise<string> => {
-  const existingDetails = await detailsRepository.findOneBy({ id: details.id })
+  const existingDetails = await detailsRepository.findOneBy({ id: details.id });
 
   if (!existingDetails) {
     throw new Error(`Details with id ${details.id} not found`);
@@ -66,16 +92,19 @@ const changeDetails = async (details: DetailsChangeDto): Promise<string> => {
   await detailsRepository.save(existingDetails);
 
   return 'Details were changed';
-}
+};
 
 const deleteDetails = async (id: number): Promise<string> => {
-  const existingDetails = await detailsRepository.findOne({ where: { id }, relations: ['solutions'] });
+  const existingDetails = await detailsRepository.findOne({
+    where: { id },
+    relations: ['solutions'],
+  });
 
   if (!existingDetails) {
     throw new Error(`Details with id ${id} not found`);
   }
 
-  await AppDataSource.transaction(async transactionalEntityManager => {
+  await AppDataSource.transaction(async (transactionalEntityManager) => {
     if (existingDetails.solutions && existingDetails.solutions.length > 0) {
       await transactionalEntityManager.remove(existingDetails.solutions);
     }
@@ -84,11 +113,12 @@ const deleteDetails = async (id: number): Promise<string> => {
   });
 
   return 'Details and related solutions were deleted';
-}
+};
 
 export default {
-  getAllModels,
+  getAllDetails,
   addDetails,
   changeDetails,
   deleteDetails,
-}
+  addDetailsToProblem,
+};

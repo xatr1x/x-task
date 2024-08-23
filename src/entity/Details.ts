@@ -1,16 +1,12 @@
 import {
+  Entity,
+  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
 import { Problem } from './Problem';
-import { Type } from './Type';
-import { Solution } from './Solution';
 
 @Entity()
 export class Details {
@@ -33,14 +29,6 @@ export class Details {
   @Column()
   description: string;
 
-  @ManyToOne(() => Problem, problem => problem.details)
-  @JoinColumn({ name: 'problem_id' })
+  @ManyToOne(() => Problem)
   problem: Problem;
-
-  @ManyToOne(() => Type, (type) => type.brands)
-  @JoinColumn({ name: 'type_id' })
-  type: Type;
-
-  @OneToMany(() => Solution, solution => solution.details, { cascade: true, onDelete: 'CASCADE' })
-  solutions: Solution[];
 }

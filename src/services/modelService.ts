@@ -16,12 +16,21 @@ interface PaginatedModels {
   models: Model[];
 }
 
-const getAllModels = async (page: number, size: number): Promise<PaginatedModels> => {
-  const count = await modelRepository.count();
+const getAllModels = async (page: number, size: number, type?: number, brand?: number): Promise<PaginatedModels> => {
+  const where: any = {};
+
+  if (type && brand) {
+    where.type = { id: type };
+    where.brand = { id: brand };
+  }
+
+  const count = await modelRepository.count(where);
 
   const models = await modelRepository.find({
     skip: (page - 1) * size,
     take: size,
+    relations: ['type', 'brand'],
+    where
   });
 
   return {

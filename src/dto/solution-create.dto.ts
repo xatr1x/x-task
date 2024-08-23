@@ -1,19 +1,13 @@
-import { IsString, IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class SolutionCreateDto {
-  @IsString()
+  @IsNotEmpty()
+  @IsInt()
+  detailsId: number;
+
   @IsNotEmpty()
   description: string;
 
-  @IsString()
-  @IsNotEmpty()
-  comment: string;
-
-  @IsInt()
-  @IsNotEmpty()
-  type: number;
-
-  @IsInt()
-  @IsNotEmpty()
-  problem: number;
+  @IsOptional()
+  comment?: string;
 }

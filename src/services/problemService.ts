@@ -1,10 +1,6 @@
 import { AppDataSource } from '../data-source';
 import { Problem } from '../entity/Problem';
-import {
-  ProblemCreateDto,
-  DetailsDto,
-  SolutionCreateDto,
-} from '../dto/problem-create.dto';
+import { ProblemCreateDto } from '../dto/problem-create.dto';
 import { Request } from '../entity/Request';
 import { Details } from '../entity/Details';
 import { Solution } from '../entity/Solution';
@@ -21,68 +17,80 @@ interface PaginatedProblems {
   count: number;
   currentPage: number;
   size: number;
-  problems: Problem[];
+  problems: any[];
 }
 
 const getAllProblems = async (
   page: number,
-  size: number
+  size: number,
+  type?: number
 ): Promise<PaginatedProblems> => {
-  const count = await problemRepository.count();
+  const where: any = {};
+
+  if (type) {
+    where.type = { id: type };
+  }
+  const count = await problemRepository.count(where);
 
   const problems = await problemRepository.find({
     skip: (page - 1) * size,
     take: size,
+    relations: ['type'],
+    where,
   });
 
   return {
     count,
     currentPage: page,
     size,
-    problems,
+    problems: groupProblems(problems),
   };
 };
 
-export const addProblem = async (problem: ProblemCreateDto): Promise<string> => {
-  const request = await requestRepository.findOneBy({ id: problem.request });
+export const addProblem = async (
+  problemDto: ProblemCreateDto
+): Promise<string> => {
+  const type = await typeRepository.findOneBy({ id: problemDto.typeId });
+  if (!type) {
+    throw new Error('тип не знайдено');
+  }
+
+  const problem = new Problem();
+  problem.description = problemDto.description;
+  problem.type = type;
+
+  await problemRepository.save(problem);
+
+  return 'Проблему успішно створено';
+};
+
+export const addProblemToTask = async (
+  requestId: number,
+  problemId: number
+): Promise<string> => {
+  const request = await requestRepository.findOne({
+    where: { id: requestId },
+    relations: ['problems'],
+  });
 
   if (!request) {
-    throw new Error(`Request with id ${problem.request} not found`);
+    throw new Error('Заявку не знайдено');
   }
 
-  const type = await typeRepository.findOneBy({ id: problem.type });
+  const problem = await problemRepository.findOne({
+    where: { id: problemId, type: request.type },
+  });
 
-  if (!type) {
-    throw new Error(`Type with id ${problem.type} not found`);
+  if (!problem) {
+    throw new Error('Проблему не знайдено');
   }
 
-  const newProblem = new Problem();
-  newProblem.description = problem.description;
-  newProblem.request = request;
-  newProblem.type = type;
+  if (!request.problems.some(p => p.id === problem.id)) {
+    request.problems.push(problem);
+    await requestRepository.save(request);
+  }
 
-  const details = problem.details.map((detailDto) => {
-    const detail = new Details();
-    detail.description = detailDto.description;
-    detail.problem = newProblem;
-    return detail;
-  });
-
-  const solutions = problem.solutions.map((solutionDto) => {
-    const solution = new Solution();
-    solution.description = solutionDto.description;
-    solution.comment = solutionDto.comment;
-    solution.problem = newProblem;
-    return solution;
-  });
-
-  await AppDataSource.transaction(async (transactionalEntityManager) => {
-    await transactionalEntityManager.save(newProblem);
-    await transactionalEntityManager.save(details);
-    await transactionalEntityManager.save(solutions);
-  });
-
-  return 'Problem added';
+  return 'Проблему успішно додано до заявки';
 };
 
 export const changeProblem = async (
@@ -104,25 +112,31 @@ export const changeProblem = async (
 };
 
 export const deleteProblem = async (id: number): Promise<string> => {
-  const existingProblem = await problemRepository.findOne({ where: { id } });
-
-  if (!existingProblem) {
-    throw new Error(`Problem with id ${id} not found`);
-  }
-
-  await AppDataSource.transaction(async (transactionalEntityManager) => {
-    if (existingProblem.details && existingProblem.details.length > 0) {
-      await transactionalEntityManager.remove(existingProblem.details);
-    }
-
-    if (existingProblem.solutions && existingProblem.solutions.length > 0) {
-      await transactionalEntityManager.remove(existingProblem.solutions);
-    }
-
-    await transactionalEntityManager.remove(existingProblem);
-  });
-
   return 'Problem and related details and solutions were deleted';
+};
+
+const groupProblems = (problems: any) => {
+  const grouped: any = {};
+
+  problems.forEach(
+    (problem: { type: { name: any }; id: any; description: any }) => {
+      const typeName = problem.type.name;
+
+      if (!grouped[typeName]) {
+        grouped[typeName] = [];
+      }
+
+      grouped[typeName].push({
+        id: problem.id,
+        problem: problem.description,
+      });
+    }
+  );
+
+  return Object.keys(grouped).map((type) => ({
+    type,
+    problems: grouped[type],
+  }));
 };
 
 export default {
@@ -130,4 +144,5 @@ export default {
   addProblem,
   changeProblem,
   deleteProblem,
+  addProblemToTask,
 };

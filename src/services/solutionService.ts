@@ -1,12 +1,11 @@
 import { AppDataSource } from '../data-source';
-import { Type } from '../entity/Type';
-import { Problem } from '../entity/Problem';
 import { Solution } from '../entity/Solution';
 import { SolutionCreateDto } from '../dto/solution-create.dto';
 import { SolutionChangeDto } from '../dto/solution-change.dto';
+import { Details } from '../entity/Details';
+import { SolutionFindDto } from '../dto/solution-find.dto';
 
-const problemRepository = AppDataSource.getRepository(Problem);
-const typeRepository = AppDataSource.getRepository(Type);
+const detailsRepository = AppDataSource.getRepository(Details);
 const solutionRepository = AppDataSource.getRepository(Solution);
 
 interface PaginatedSolutions {
@@ -16,7 +15,10 @@ interface PaginatedSolutions {
   solutions: Solution[];
 }
 
-const getAllSolutions = async (page: number, size: number): Promise<PaginatedSolutions> => {
+const getAllSolutions = async (
+  page: number,
+  size: number
+): Promise<PaginatedSolutions> => {
   const count = await solutionRepository.count();
 
   const solutions = await solutionRepository.find({
@@ -32,31 +34,30 @@ const getAllSolutions = async (page: number, size: number): Promise<PaginatedSol
   };
 };
 
-const addSoulution = async (solution: SolutionCreateDto): Promise<string> => {
-  const existingType = await typeRepository.findOne({ where: { id: solution.type }});
-
-  if (!existingType) {
-    throw new Error(`type with id ${solution.type} not found`);
-  }
-
-  const existingProblem = await problemRepository.findOne({ where: { id: solution.problem }});
-
-  if (!existingProblem) {
-    throw new Error(`problem with id ${solution.problem} not found`);
-  }
-
-  await solutionRepository.save({
-    description: solution.description,
-    comment: solution.comment,
-    type: { id: solution.type },
-    problem: { id: solution.problem }
+const addSoulution = async (
+  solutionDto: SolutionCreateDto
+): Promise<string> => {
+  const details = await detailsRepository.findOneBy({
+    id: solutionDto.detailsId,
   });
+  if (!details) {
+    throw new Error('Деталі не знайдено');
+  }
 
-  return 'Solution was added';
-}
+  const solution = new Solution();
+  solution.description = solutionDto.description;
+  solution.comment = solutionDto.comment || null;
+  solution.details = details;
+
+  await solutionRepository.save(solution);
+
+  return 'Рішення успішно створено';
+};
 
 const changeSolution = async (solution: SolutionChangeDto): Promise<string> => {
-  const existingSolution = await solutionRepository.findOneBy({ id: solution.id })
+  const existingSolution = await solutionRepository.findOneBy({
+    id: solution.id,
+  });
 
   if (!existingSolution) {
     throw new Error(`Details with id ${solution.id} not found`);
@@ -68,10 +69,10 @@ const changeSolution = async (solution: SolutionChangeDto): Promise<string> => {
   await solutionRepository.save(existingSolution);
 
   return 'Solution was changed';
-}
+};
 
 const deleteSolution = async (id: number): Promise<string> => {
-  const existingSolution = await solutionRepository.findOne({ where: { id }});
+  const existingSolution = await solutionRepository.findOne({ where: { id } });
 
   if (!existingSolution) {
     throw new Error(`Solution with id ${id} not found`);
@@ -80,11 +81,51 @@ const deleteSolution = async (id: number): Promise<string> => {
   await solutionRepository.remove(existingSolution);
 
   return 'Solution was removed';
-}
+};
+
+export const findSolution = async (
+  solutionFindDto: SolutionFindDto
+): Promise<Solution[]> => {
+  const query = solutionRepository
+    .createQueryBuilder('solution')
+    .innerJoin('solution.details', 'details')
+    .innerJoin('details.problem', 'problem')
+    .innerJoin('problem.request', 'request')
+    .where('request.typeId = :typeId', { typeId: solutionFindDto.typeId });
+
+  if (solutionFindDto.brandId) {
+    query.andWhere('request.brandId = :brandId', {
+      brandId: solutionFindDto.brandId,
+    });
+  }
+
+  if (solutionFindDto.modelId) {
+    query.andWhere('request.modelId = :modelId', {
+      modelId: solutionFindDto.modelId,
+    });
+  }
+
+  if (solutionFindDto.problemIds && solutionFindDto.problemIds.length > 0) {
+    query.andWhere('problem.id IN (:...problemIds)', {
+      problemIds: solutionFindDto.problemIds,
+    });
+  }
+
+  if (solutionFindDto.detailsIds && solutionFindDto.detailsIds.length > 0) {
+    query.andWhere('details.id IN (:...detailsIds)', {
+      detailsIds: solutionFindDto.detailsIds,
+    });
+  }
+
+  const solutions = await query.getMany();
+
+  return solutions;
+};
 
 export default {
   getAllSolutions,
   addSoulution,
   changeSolution,
   deleteSolution,
-}
+  findSolution,
+};

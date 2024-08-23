@@ -15,10 +15,24 @@ export const getRequests = async (
     const result = await requestService.getAllRequests(page, size);
     return res.json(result);
   } catch (e) {
-    console.error('Error getting request', e);
+    console.error('Error getting requests', e);
     return res.status(500).send((e as Error).message);
   }
 };
+
+export const getRequest = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const result = await requestService.getRequest(+req.params.requestId);
+
+    return res.json(result);
+  } catch (e) {
+    console.error('Error getting one request', e);
+    return res.status(500).send((e as Error).message);
+  }
+}
 
 export const addRequest = async (
   req: Request,
@@ -26,7 +40,9 @@ export const addRequest = async (
 ): Promise<Response>  => {
   try {
     const requestDto = plainToClass(RequestCreateDto, req.body);
-    const errors = await validate(requestDto);
+    const errors = await validate(requestDto, {
+      skipMissingProperties: true,
+    });
 
     if (errors.length > 0) {
       return res.status(400).json({

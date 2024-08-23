@@ -1,16 +1,16 @@
 import {
-  Column,
-  CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinTable,
 } from 'typeorm';
-import { Solution } from './Solution';
 import { Request } from './Request';
 import { Details } from './Details';
+import { Solution } from './Solution';
 import { Type } from './Type';
 
 @Entity()
@@ -34,17 +34,22 @@ export class Problem {
   @Column()
   description: string;
 
-  @ManyToOne(() => Request, request => request.problems)
-  @JoinColumn({ name: 'request_id' })
-  request: Request;
+  @ManyToOne(() => Type)
+  type: Type;
 
-  @OneToMany(() => Solution, solution => solution.problem, { cascade: true })
-  solutions: Solution[];
-
-  @OneToMany(() => Details, details => details.problem, { cascade: true })
+  @ManyToMany(() => Details)
+  @JoinTable({
+    name: 'problem_details',
+    joinColumn: { name: 'problem_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'details_id', referencedColumnName: 'id' },
+  })
   details: Details[];
 
-  @ManyToOne(() => Type, (type) => type.brands)
-  @JoinColumn({ name: 'type_id' })
-  type: Type;
+  @ManyToMany(() => Solution)
+  @JoinTable({
+    name: 'problem_solutions',
+    joinColumn: { name: 'problem_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'solution_id', referencedColumnName: 'id' },
+  })
+  solutions: Solution[];
 }

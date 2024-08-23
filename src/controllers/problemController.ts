@@ -11,8 +11,9 @@ export const getProblems = async (
   try {
     const page = parseInt(req.query.page as string, 10) || 1;
     const size = parseInt(req.query.size as string, 10) || 10;
+    const type = parseInt(req.query.type as string, 10) || undefined;
 
-    const result = await problemService.getAllProblems(page, size);
+    const result = await problemService.getAllProblems(page, size, type);
     return res.json(result);
   } catch (e) {
     console.error('Error getting problems', e);
@@ -40,6 +41,20 @@ export const addProblem = async (
     return res.json(result);
   } catch (e) {
     console.error('Error adding problem', e);
+    return res.status(500).send((e as Error).message);
+  }
+}
+
+export const addProblemToTask = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const result = await problemService.addProblemToTask(+req.params.requestId, +req.params.problemId);
+
+    return res.json(result);
+  } catch (e) {
+    console.error('Помилка при доддаванні проблеми до заявки', e);
     return res.status(500).send((e as Error).message);
   }
 }

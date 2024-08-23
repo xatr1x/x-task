@@ -1,15 +1,10 @@
-import { IsString, IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty } from 'class-validator';
 
 export class DetailsCreateDto {
-  @IsString()
+  @IsNotEmpty()
+  @IsInt()
+  problemId: number;
+
   @IsNotEmpty()
   description: string;
-
-  @IsInt()
-  @IsNotEmpty()
-  type: number;
-
-  @IsInt()
-  @IsNotEmpty()
-  problem: number;
 }

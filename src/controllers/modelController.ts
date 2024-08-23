@@ -12,8 +12,10 @@ export const getModels = async (
   try {
     const page = parseInt(req.query.page as string, 10) || 1;
     const size = parseInt(req.query.size as string, 10) || 10;
+    const type = parseInt(req.query.type as string, 10) || undefined;
+    const brand = parseInt(req.query.brand as string, 10) || undefined;
   
-    const result = await modelService.getAllModels(page, size);
+    const result = await modelService.getAllModels(page, size, type, brand);
     return res.json(result);
   } catch (e) {
     console.error('Error getting models', e);
