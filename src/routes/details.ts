@@ -13,6 +13,6 @@ router.get('/', getDetails);
 router.post('/', addDetails);
 router.patch('/', changeDetails);
 router.delete('/:id', deleteDetails);
-router.put('/:problemId/:detailsId', addDetailsToProblem);
+router.put('/:requestId/:problemId/:detailsId', addDetailsToProblem);
 
 export default router;

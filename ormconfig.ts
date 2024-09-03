@@ -7,6 +7,7 @@ import { Request } from './src/entity/Request';
 import { Problem } from './src/entity/Problem';
 import { Solution } from './src/entity/Solution';
 import { Details } from './src/entity/Details';
+import { RequestProblemDetails } from './src/entity/RequestProblemDetails';
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ const ormconfig: DataSourceOptions = {
   database: process.env.PG_CORE_DATABASE,
   synchronize: true,
   logging: false,
-  entities: [Type, Brand, Model, Request, Problem, Solution, Details],
+  entities: [Type, Brand, Model, Request, Problem, Solution, Details, RequestProblemDetails],
   migrations: ['src/migration/**/*.ts'],
   subscribers: ['src/subscriber/**/*.ts'],
 };

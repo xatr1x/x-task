@@ -5,12 +5,14 @@ import { Brand } from '../entity/Brand';
 import { Type } from '../entity/Type';
 import { RequestCreateDto } from '../dto/request-create.dto';
 import { Problem } from '../entity/Problem';
+import { RequestProblemDetails } from '../entity/RequestProblemDetails';
 
 const requestRepository = AppDataSource.getRepository(Request);
 const typeRepository = AppDataSource.getRepository(Type);
 const brandRepository = AppDataSource.getRepository(Brand);
 const modelRepository = AppDataSource.getRepository(Model);
 const problemRepository = AppDataSource.getRepository(Problem);
+const requestProblemDetailsRepository = AppDataSource.getRepository(RequestProblemDetails)
 
 interface PaginatedRequests {
   count: number;
@@ -42,15 +44,32 @@ const getAllRequests = async (
 const getRequest = async (id: number): Promise<Request> => {
   const request = await requestRepository.findOne({
     where: { id },
-    relations: ['type', 'brand', 'model', 'problems.details'],
+    relations: ['type', 'brand', 'model', 'problems'],
   });
 
   if (!request) {
     throw new Error('No such request');
   }
 
-  return request;
+  const problemsWithDetails = await Promise.all(
+    request.problems.map(async (problem) => {
+      const details = await requestProblemDetailsRepository.find({
+        where: { request: { id }, problem: { id: problem.id } },
+        relations: ['details'],
+      });
+      return {
+        ...problem,
+        details: details.map((d) => d.details),
+      };
+    })
+  );
+
+  return {
+    ...request,
+    problems: problemsWithDetails,
+  };
 };
+
 
 const addRequest = async (requestDto: RequestCreateDto): Promise<number> => {
   const type = await typeRepository.findOneBy({ id: requestDto.typeId });

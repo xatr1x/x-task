@@ -1,15 +1,16 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
+  ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
 } from 'typeorm';
-import { Type } from './Type';
+import { Request } from './Request';
+import { Problem } from './Problem';
+import { Details } from './Details';
 
 @Entity()
-export class Problem {
+export class RequestProblemDetails {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -26,9 +27,12 @@ export class Problem {
   })
   public updated_at: Date;
 
-  @Column()
-  description: string;
+  @ManyToOne(() => Request)
+  request: Request;
 
-  @ManyToOne(() => Type)
-  type: Type;
+  @ManyToOne(() => Problem)
+  problem: Problem;
+
+  @ManyToOne(() => Details)
+  details: Details;
 }

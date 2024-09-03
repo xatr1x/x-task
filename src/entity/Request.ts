@@ -6,11 +6,13 @@ import {
   ManyToMany,
   JoinTable,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { Problem } from './Problem';
 import { Type } from './Type';
 import { Brand } from './Brand';
 import { Model } from './Model';
+import { RequestProblemDetails } from './RequestProblemDetails';
 
 @Entity()
 export class Request {
@@ -39,4 +41,7 @@ export class Request {
     inverseJoinColumn: { name: 'problem_id', referencedColumnName: 'id' },
   })
   problems: Problem[];
+
+  @OneToMany(() => RequestProblemDetails, (rpd) => rpd.request)
+  requestProblemDetails: RequestProblemDetails[];
 }
