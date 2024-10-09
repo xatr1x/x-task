@@ -3,9 +3,19 @@ import { Solution } from '../entity/Solution';
 import { SolutionCreateDto } from '../dto/solution-create.dto';
 import { SolutionChangeDto } from '../dto/solution-change.dto';
 import { Details } from '../entity/Details';
+import { Request } from '../entity/Request';
 import { SolutionFindDto } from '../dto/solution-find.dto';
+import { Problem } from '../entity/Problem';
+import { Brand } from '../entity/Brand';
+import { Model } from '../entity/Model';
+import { Type } from '../entity/Type';
 
 const detailsRepository = AppDataSource.getRepository(Details);
+const problemRepository = AppDataSource.getRepository(Problem);
+const requestRepository = AppDataSource.getRepository(Request);
+const brandRepository = AppDataSource.getRepository(Brand);
+const modelRepository = AppDataSource.getRepository(Model);
+const typeRepository = AppDataSource.getRepository(Type);
 const solutionRepository = AppDataSource.getRepository(Solution);
 
 interface PaginatedSolutions {
@@ -34,24 +44,24 @@ const getAllSolutions = async (
   };
 };
 
-const addSoulution = async (
+const addSolution = async (
   solutionDto: SolutionCreateDto
 ): Promise<string> => {
-  const details = await detailsRepository.findOneBy({
-    id: solutionDto.detailsId,
-  });
-  if (!details) {
-    throw new Error('Деталі не знайдено');
+  // Перевірка існування проблеми
+  const problem = await problemRepository.findOne({ where: { id: solutionDto.problemId } });
+  if (!problem) {
+    throw new Error('Проблему не знайдено');
   }
 
+  // Створення і збереження нового рішення
   const solution = new Solution();
   solution.description = solutionDto.description;
-  solution.comment = solutionDto.comment || null;
-  solution.details = details;
+  solution.comment = solutionDto.comment || '';
+  solution.problem = problem;
 
   await solutionRepository.save(solution);
 
-  return 'Рішення успішно створено';
+  return 'Рішення успішно створено для проблеми';
 };
 
 const changeSolution = async (solution: SolutionChangeDto): Promise<string> => {
@@ -83,7 +93,7 @@ const deleteSolution = async (id: number): Promise<string> => {
   return 'Solution was removed';
 };
 
-export const findSolution = async (
+const findSolution = async (
   solutionFindDto: SolutionFindDto
 ): Promise<Solution[]> => {
   const query = solutionRepository
@@ -124,7 +134,7 @@ export const findSolution = async (
 
 export default {
   getAllSolutions,
-  addSoulution,
+  addSolution,
   changeSolution,
   deleteSolution,
   findSolution,

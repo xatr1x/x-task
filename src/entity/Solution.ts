@@ -3,10 +3,10 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  UpdateDateColumn,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Type } from './Type';
+import { Problem } from './Problem';
 
 @Entity()
 export class Solution {
@@ -32,6 +32,6 @@ export class Solution {
   @Column({ nullable: true })
   comment: string;
 
-  @ManyToOne(() => Type)
-  type: Type;
+  @ManyToOne(() => Problem)
+  problem: Problem;
 }
